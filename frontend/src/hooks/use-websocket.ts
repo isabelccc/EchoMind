@@ -12,12 +12,14 @@ interface UseWebSocketReturn {
   sendMessage: (message: WebSocketMessage) => void;
   lastMessage: string | null;
   error: string | null;
+  connectionStatus: 'connecting' | 'connected' | 'disconnected' | 'error';
 }
 
 export function useWebSocket(): UseWebSocketReturn {
   const [isConnected, setIsConnected] = useState(false);
   const [lastMessage, setLastMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [connectionStatus, setConnectionStatus] = useState<'connecting' | 'connected' | 'disconnected' | 'error'>('disconnected');
   
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -26,11 +28,15 @@ export function useWebSocket(): UseWebSocketReturn {
 
   const connect = useCallback((clientId: string) => {
     try {
+      setConnectionStatus('connecting');
+      setError(null);
+      
       const wsUrl = process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:8000';
       const ws = new WebSocket(`${wsUrl}/ws/${clientId}`);
       
       ws.onopen = () => {
         setIsConnected(true);
+        setConnectionStatus('connected');
         setError(null);
         reconnectAttemptsRef.current = 0;
         console.log('WebSocket connected');
@@ -42,6 +48,7 @@ export function useWebSocket(): UseWebSocketReturn {
 
       ws.onclose = (event) => {
         setIsConnected(false);
+        setConnectionStatus('disconnected');
         console.log('WebSocket disconnected:', event.code, event.reason);
         
         // Attempt to reconnect if not a normal closure
@@ -57,12 +64,14 @@ export function useWebSocket(): UseWebSocketReturn {
       };
 
       ws.onerror = (event) => {
+        setConnectionStatus('error');
         setError('WebSocket error occurred');
         console.error('WebSocket error:', event);
       };
 
       wsRef.current = ws;
     } catch (err) {
+      setConnectionStatus('error');
       setError('Failed to connect to WebSocket');
       console.error('WebSocket connection error:', err);
     }
@@ -80,6 +89,7 @@ export function useWebSocket(): UseWebSocketReturn {
     }
     
     setIsConnected(false);
+    setConnectionStatus('disconnected');
     setError(null);
   }, []);
 
@@ -110,5 +120,6 @@ export function useWebSocket(): UseWebSocketReturn {
     sendMessage,
     lastMessage,
     error,
+    connectionStatus,
   };
 } 

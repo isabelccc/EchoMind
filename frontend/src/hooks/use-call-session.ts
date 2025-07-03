@@ -17,14 +17,17 @@ interface UseCallSessionReturn {
   endSession: (sessionId: string) => Promise<void>;
   isLoading: boolean;
   error: string | null;
+  sessionStatus: 'idle' | 'starting' | 'active' | 'ending' | 'error';
 }
 
 export function useCallSession(): UseCallSessionReturn {
   const [sessionData, setSessionData] = useState<SessionData | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [sessionStatus, setSessionStatus] = useState<'idle' | 'starting' | 'active' | 'ending' | 'error'>('idle');
 
   const startSessionMutation = useMutation({
     mutationFn: async (sessionId: string) => {
+      setSessionStatus('starting');
       const response = await api.post('/sessions', {
         session_id: sessionId,
         call_type: 'support',
@@ -33,33 +36,46 @@ export function useCallSession(): UseCallSessionReturn {
     },
     onSuccess: (data: SessionData) => {
       setSessionData(data);
+      setSessionStatus('active');
       setError(null);
     },
     onError: (err: any) => {
+      setSessionStatus('error');
       setError(err.message || 'Failed to start session');
     },
   });
 
   const endSessionMutation = useMutation({
     mutationFn: async (sessionId: string) => {
+      setSessionStatus('ending');
       const response = await api.delete(`/sessions/${sessionId}`);
       return response.data;
     },
     onSuccess: () => {
       setSessionData(null);
+      setSessionStatus('idle');
       setError(null);
     },
     onError: (err: any) => {
+      setSessionStatus('error');
       setError(err.message || 'Failed to end session');
     },
   });
 
   const startSession = useCallback(async (sessionId: string) => {
-    await startSessionMutation.mutateAsync(sessionId);
+    try {
+      await startSessionMutation.mutateAsync(sessionId);
+    } catch (error) {
+      // Error is handled in the mutation
+    }
   }, [startSessionMutation]);
 
   const endSession = useCallback(async (sessionId: string) => {
-    await endSessionMutation.mutateAsync(sessionId);
+    try {
+      await endSessionMutation.mutateAsync(sessionId);
+    } catch (error) {
+      // Error is handled in the mutation
+    }
   }, [endSessionMutation]);
 
   return {
@@ -68,5 +84,6 @@ export function useCallSession(): UseCallSessionReturn {
     endSession,
     isLoading: startSessionMutation.isPending || endSessionMutation.isPending,
     error,
+    sessionStatus,
   };
 } 

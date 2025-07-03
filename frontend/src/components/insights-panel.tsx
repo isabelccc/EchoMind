@@ -9,7 +9,15 @@ import {
   Lightbulb,
   Clock,
   User,
-  Zap
+  Zap,
+  Sparkles,
+  Activity,
+  Shield,
+  Target,
+  BarChart3,
+  Eye,
+  Heart,
+  Star
 } from 'lucide-react';
 
 interface InsightsPanelProps {
@@ -37,7 +45,7 @@ export function InsightsPanel({ lastMessage, sessionId }: InsightsPanelProps) {
             data: data.insights,
             timestamp: Date.now(),
           };
-          setInsights(prev => [newInsight, ...prev.slice(0, 9)]); // Keep last 10 insights
+          setInsights(prev => [newInsight, ...prev.slice(0, 9)]);
         }
       } catch (error) {
         console.error('Failed to parse insights message:', error);
@@ -45,58 +53,77 @@ export function InsightsPanel({ lastMessage, sessionId }: InsightsPanelProps) {
     }
   }, [lastMessage]);
 
+  const tabs = [
+    { id: 'all', label: 'All Insights', icon: Brain },
+    { id: 'sentiment', label: 'Sentiment', icon: Heart },
+    { id: 'intent', label: 'Intent', icon: Target },
+    { id: 'pii', label: 'PII', icon: Shield },
+    { id: 'topics', label: 'Topics', icon: BarChart3 },
+  ];
+
   const getSentimentColor = (sentiment: string) => {
     switch (sentiment?.toLowerCase()) {
       case 'positive':
-        return 'text-success-600 bg-success-50';
+        return 'text-green-600 bg-green-50 border-green-200';
       case 'negative':
-        return 'text-error-600 bg-error-50';
+        return 'text-red-600 bg-red-50 border-red-200';
       case 'neutral':
-        return 'text-gray-600 bg-gray-50';
+        return 'text-gray-600 bg-gray-50 border-gray-200';
       default:
-        return 'text-gray-600 bg-gray-50';
+        return 'text-gray-600 bg-gray-50 border-gray-200';
     }
   };
 
   const getIntentColor = (intent: string) => {
     switch (intent?.toLowerCase()) {
       case 'question':
-        return 'text-primary-600 bg-primary-50';
+        return 'text-blue-600 bg-blue-50 border-blue-200';
       case 'complaint':
-        return 'text-error-600 bg-error-50';
+        return 'text-red-600 bg-red-50 border-red-200';
       case 'request':
-        return 'text-warning-600 bg-warning-50';
+        return 'text-orange-600 bg-orange-50 border-orange-200';
       case 'feedback':
-        return 'text-success-600 bg-success-50';
+        return 'text-green-600 bg-green-50 border-green-200';
       default:
-        return 'text-gray-600 bg-gray-50';
+        return 'text-gray-600 bg-gray-50 border-gray-200';
     }
   };
 
   const renderSentimentInsight = (data: any) => (
-    <div className="space-y-3">
+    <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <span className="text-sm font-medium text-gray-900">Sentiment</span>
-        <span className={`px-2 py-1 rounded-full text-xs font-medium ${getSentimentColor(data.sentiment)}`}>
+        <div className="flex items-center space-x-2">
+          <Heart className="w-5 h-5 text-pink-500" />
+          <span className="font-semibold text-gray-900">Sentiment Analysis</span>
+        </div>
+        <span className={`px-3 py-1 rounded-full text-sm font-medium border ${getSentimentColor(data.sentiment)}`}>
           {data.sentiment || 'Unknown'}
         </span>
       </div>
       
       {data.confidence && (
-        <div className="flex items-center justify-between">
-          <span className="text-sm text-gray-600">Confidence</span>
-          <span className="text-sm font-medium text-gray-900">
-            {Math.round(data.confidence * 100)}%
-          </span>
+        <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl p-4 border border-blue-200">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-sm font-medium text-gray-700">Confidence</span>
+            <span className="text-lg font-bold text-blue-600">
+              {Math.round(data.confidence * 100)}%
+            </span>
+          </div>
+          <div className="w-full bg-blue-200 rounded-full h-2">
+            <div 
+              className="bg-gradient-to-r from-blue-500 to-purple-500 h-2 rounded-full transition-all duration-500"
+              style={{ width: `${Math.round(data.confidence * 100)}%` }}
+            ></div>
+          </div>
         </div>
       )}
       
       {data.emotions && data.emotions.length > 0 && (
-        <div>
-          <span className="text-sm text-gray-600">Emotions</span>
-          <div className="flex flex-wrap gap-1 mt-1">
+        <div className="space-y-3">
+          <span className="text-sm font-medium text-gray-700">Detected Emotions</span>
+          <div className="flex flex-wrap gap-2">
             {data.emotions.map((emotion: string, index: number) => (
-              <span key={index} className="px-2 py-1 bg-gray-100 text-xs rounded-full">
+              <span key={index} className="px-3 py-1 bg-gradient-to-r from-purple-100 to-pink-100 text-purple-700 text-sm rounded-full border border-purple-200">
                 {emotion}
               </span>
             ))}
@@ -107,161 +134,94 @@ export function InsightsPanel({ lastMessage, sessionId }: InsightsPanelProps) {
   );
 
   const renderIntentInsight = (data: any) => (
-    <div className="space-y-3">
+    <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <span className="text-sm font-medium text-gray-900">Primary Intent</span>
-        <span className={`px-2 py-1 rounded-full text-xs font-medium ${getIntentColor(data.primary_intent)}`}>
+        <div className="flex items-center space-x-2">
+          <Target className="w-5 h-5 text-blue-500" />
+          <span className="font-semibold text-gray-900">Customer Intent</span>
+        </div>
+        <span className={`px-3 py-1 rounded-full text-sm font-medium border ${getIntentColor(data.primary_intent)}`}>
           {data.primary_intent || 'Unknown'}
         </span>
       </div>
       
       {data.urgency && (
-        <div className="flex items-center justify-between">
-          <span className="text-sm text-gray-600">Urgency</span>
-          <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-            data.urgency === 'high' ? 'text-error-600 bg-error-50' :
-            data.urgency === 'medium' ? 'text-warning-600 bg-warning-50' :
-            'text-success-600 bg-success-50'
-          }`}>
-            {data.urgency}
-          </span>
+        <div className="bg-gradient-to-r from-orange-50 to-red-50 rounded-xl p-4 border border-orange-200">
+          <div className="flex items-center justify-between">
+            <span className="text-sm font-medium text-gray-700">Urgency Level</span>
+            <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+              data.urgency === 'high' ? 'text-red-600 bg-red-100' :
+              data.urgency === 'medium' ? 'text-orange-600 bg-orange-100' :
+              'text-green-600 bg-green-100'
+            }`}>
+              {data.urgency}
+            </span>
+          </div>
         </div>
       )}
       
       {data.requires_action && (
+        <div className="flex items-center space-x-3 p-3 bg-red-50 border border-red-200 rounded-xl">
+          <AlertTriangle className="w-5 h-5 text-red-500" />
+          <span className="text-sm font-medium text-red-700">Immediate Action Required</span>
+        </div>
+      )}
+    </div>
+  );
+
+  const renderPIIInsight = (data: any) => (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
         <div className="flex items-center space-x-2">
-          <AlertTriangle className="w-4 h-4 text-warning-500" />
-          <span className="text-sm text-warning-600">Action Required</span>
+          <Shield className="w-5 h-5 text-green-500" />
+          <span className="font-semibold text-gray-900">PII Detection</span>
         </div>
-      )}
-    </div>
-  );
-
-  const renderSuggestedResponse = (data: any) => (
-    <div className="space-y-3">
-      <div className="flex items-center space-x-2">
-        <MessageSquare className="w-4 h-4 text-primary-500" />
-        <span className="text-sm font-medium text-gray-900">Suggested Response</span>
+        <span className="px-3 py-1 bg-green-100 text-green-700 text-sm font-medium rounded-full">
+          {data.pii_count || 0} Found
+        </span>
       </div>
       
-      <div className="bg-primary-50 border border-primary-200 rounded-lg p-3">
-        <p className="text-sm text-gray-900">{data.suggested_response}</p>
-      </div>
-      
-      {data.tone && (
-        <div className="flex items-center justify-between">
-          <span className="text-sm text-gray-600">Recommended Tone</span>
-          <span className="px-2 py-1 bg-primary-100 text-primary-700 text-xs rounded-full">
-            {data.tone}
-          </span>
-        </div>
-      )}
-      
-      {data.key_points && data.key_points.length > 0 && (
-        <div>
-          <span className="text-sm text-gray-600">Key Points</span>
-          <ul className="mt-1 space-y-1">
-            {data.key_points.map((point: string, index: number) => (
-              <li key={index} className="text-sm text-gray-900 flex items-start space-x-2">
-                <span className="w-1.5 h-1.5 bg-primary-500 rounded-full mt-2 flex-shrink-0"></span>
-                <span>{point}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-    </div>
-  );
-
-  const renderObjectionHandling = (data: any) => (
-    <div className="space-y-3">
-      <div className="flex items-center space-x-2">
-        <AlertTriangle className="w-4 h-4 text-warning-500" />
-        <span className="text-sm font-medium text-gray-900">Objection Handling</span>
-      </div>
-      
-      {data.objections_detected && data.objections_detected.length > 0 ? (
+      {data.pii_types && data.pii_types.length > 0 && (
         <div className="space-y-3">
-          {data.objections_detected.map((objection: string, index: number) => (
-            <div key={index} className="bg-warning-50 border border-warning-200 rounded-lg p-3">
-              <p className="text-sm font-medium text-warning-800 mb-2">{objection}</p>
-              {data.handling_strategies && data.handling_strategies[index] && (
-                <p className="text-sm text-warning-700">{data.handling_strategies[index]}</p>
-              )}
-            </div>
-          ))}
+          <span className="text-sm font-medium text-gray-700">Detected PII Types</span>
+          <div className="grid grid-cols-2 gap-2">
+            {data.pii_types.map((type: string, index: number) => (
+              <div key={index} className="flex items-center space-x-2 p-2 bg-yellow-50 border border-yellow-200 rounded-lg">
+                <Shield className="w-4 h-4 text-yellow-600" />
+                <span className="text-sm text-yellow-800">{type}</span>
+              </div>
+            ))}
+          </div>
         </div>
-      ) : (
-        <p className="text-sm text-gray-600">No objections detected</p>
       )}
     </div>
   );
 
-  const renderFAQSuggestions = (data: any) => (
-    <div className="space-y-3">
-      <div className="flex items-center space-x-2">
-        <Lightbulb className="w-4 h-4 text-primary-500" />
-        <span className="text-sm font-medium text-gray-900">FAQ Suggestions</span>
-      </div>
-      
-      {data.relevant_topics && data.relevant_topics.length > 0 ? (
-        <div className="space-y-2">
-          {data.relevant_topics.map((topic: string, index: number) => (
-            <div key={index} className="flex items-center justify-between p-2 bg-gray-50 rounded-lg">
-              <span className="text-sm text-gray-900">{topic}</span>
-              {data.confidence_scores && (
-                <span className="text-xs text-gray-500">
-                  {Math.round(data.confidence_scores[index] * 100)}%
-                </span>
-              )}
-            </div>
-          ))}
+  const renderTopicInsight = (data: any) => (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center space-x-2">
+          <BarChart3 className="w-5 h-5 text-purple-500" />
+          <span className="font-semibold text-gray-900">Conversation Topics</span>
         </div>
-      ) : (
-        <p className="text-sm text-gray-600">No FAQ suggestions available</p>
-      )}
-    </div>
-  );
-
-  const renderEmotionCalibration = (data: any) => (
-    <div className="space-y-3">
-      <div className="flex items-center space-x-2">
-        <User className="w-4 h-4 text-primary-500" />
-        <span className="text-sm font-medium text-gray-900">Emotion Calibration</span>
+        <span className="px-3 py-1 bg-purple-100 text-purple-700 text-sm font-medium rounded-full">
+          {data.topics?.length || 0} Topics
+        </span>
       </div>
       
-      <div className="space-y-2">
-        {data.customer_emotion && (
-          <div className="flex items-center justify-between">
-            <span className="text-sm text-gray-600">Customer Emotion</span>
-            <span className="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded-full">
-              {data.customer_emotion}
-            </span>
+      {data.topics && data.topics.length > 0 && (
+        <div className="space-y-3">
+          <span className="text-sm font-medium text-gray-700">Key Topics</span>
+          <div className="space-y-2">
+            {data.topics.map((topic: string, index: number) => (
+              <div key={index} className="flex items-center space-x-2 p-3 bg-gradient-to-r from-purple-50 to-blue-50 border border-purple-200 rounded-lg">
+                <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
+                <span className="text-sm text-gray-900">{topic}</span>
+              </div>
+            ))}
           </div>
-        )}
-        
-        {data.agent_tone_adjustment && (
-          <div className="flex items-center justify-between">
-            <span className="text-sm text-gray-600">Tone Adjustment</span>
-            <span className="px-2 py-1 bg-primary-100 text-primary-700 text-xs rounded-full">
-              {data.agent_tone_adjustment}
-            </span>
-          </div>
-        )}
-        
-        {data.energy_level && (
-          <div className="flex items-center justify-between">
-            <span className="text-sm text-gray-600">Energy Level</span>
-            <span className={`px-2 py-1 text-xs rounded-full ${
-              data.energy_level === 'high' ? 'bg-success-100 text-success-700' :
-              data.energy_level === 'medium' ? 'bg-warning-100 text-warning-700' :
-              'bg-gray-100 text-gray-700'
-            }`}>
-              {data.energy_level}
-            </span>
-          </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 
@@ -269,86 +229,83 @@ export function InsightsPanel({ lastMessage, sessionId }: InsightsPanelProps) {
     const { data } = insight;
     
     return (
-      <div key={insight.timestamp} className="bg-white border border-gray-200 rounded-lg p-4 space-y-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-2">
-            <Brain className="w-4 h-4 text-primary-500" />
-            <span className="text-sm font-medium text-gray-900">AI Insights</span>
+      <div className="card shadow-soft animate-fade-in">
+        <div className="card-content space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-2">
+              <Sparkles className="w-5 h-5 text-yellow-500" />
+              <span className="font-semibold text-gray-900">AI Insights</span>
+            </div>
+            <span className="text-xs text-gray-500">
+              {new Date(insight.timestamp).toLocaleTimeString()}
+            </span>
           </div>
-          <span className="text-xs text-gray-500">
-            {new Date(insight.timestamp).toLocaleTimeString()}
-          </span>
-        </div>
-        
-        <div className="space-y-4">
-          {data.sentiment && renderSentimentInsight(data.sentiment)}
-          {data.intent && renderIntentInsight(data.intent)}
-          {data.suggested_response && renderSuggestedResponse(data.suggested_response)}
-          {data.objection_handling && renderObjectionHandling(data.objection_handling)}
-          {data.faq_suggestion && renderFAQSuggestions(data.faq_suggestion)}
-          {data.emotion_calibration && renderEmotionCalibration(data.emotion_calibration)}
+
+          {data.sentiment && renderSentimentInsight(data)}
+          {data.primary_intent && renderIntentInsight(data)}
+          {data.pii_types && renderPIIInsight(data)}
+          {data.topics && renderTopicInsight(data)}
         </div>
       </div>
     );
   };
 
   return (
-    <div className="h-full flex flex-col">
+    <div className="h-full flex flex-col bg-white">
       {/* Header */}
-      <div className="p-4 border-b border-gray-200">
-        <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-gray-900">AI Insights</h2>
+      <div className="p-6 border-b border-gray-200">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-xl font-bold text-gray-900">AI Insights</h2>
           <div className="flex items-center space-x-2">
-            <Zap className="w-4 h-4 text-primary-500" />
-            <span className="text-sm text-gray-600">Real-time</span>
+            <Activity className="w-4 h-4 text-green-500" />
+            <span className="text-sm text-green-600 font-medium">Live Analysis</span>
           </div>
+        </div>
+        
+        {/* Tabs */}
+        <div className="flex space-x-1">
+          {tabs.map((tab) => {
+            const Icon = tab.icon;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`flex items-center space-x-2 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                  activeTab === tab.id
+                    ? 'bg-blue-100 text-blue-700'
+                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                }`}
+              >
+                <Icon className="w-4 h-4" />
+                <span>{tab.label}</span>
+              </button>
+            );
+          })}
         </div>
       </div>
 
-      {/* Tabs */}
-      <div className="flex border-b border-gray-200">
-        <button
-          onClick={() => setActiveTab('all')}
-          className={`flex-1 px-4 py-2 text-sm font-medium ${
-            activeTab === 'all'
-              ? 'text-primary-600 border-b-2 border-primary-600'
-              : 'text-gray-600 hover:text-gray-900'
-          }`}
-        >
-          All Insights
-        </button>
-        <button
-          onClick={() => setActiveTab('sentiment')}
-          className={`flex-1 px-4 py-2 text-sm font-medium ${
-            activeTab === 'sentiment'
-              ? 'text-primary-600 border-b-2 border-primary-600'
-              : 'text-gray-600 hover:text-gray-900'
-          }`}
-        >
-          Sentiment
-        </button>
-        <button
-          onClick={() => setActiveTab('actions')}
-          className={`flex-1 px-4 py-2 text-sm font-medium ${
-            activeTab === 'actions'
-              ? 'text-primary-600 border-b-2 border-primary-600'
-              : 'text-gray-600 hover:text-gray-900'
-          }`}
-        >
-          Actions
-        </button>
-      </div>
-
-      {/* Insights Content */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+      {/* Content */}
+      <div className="flex-1 overflow-y-auto p-6 space-y-4">
         {insights.length === 0 ? (
-          <div className="text-center text-gray-500 py-8">
-            <Brain className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-            <p>No insights available yet</p>
-            <p className="text-sm">Start a call to see AI-generated insights</p>
+          <div className="text-center py-12">
+            <div className="w-16 h-16 bg-gradient-to-br from-blue-100 to-purple-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+              <Brain className="w-8 h-8 text-blue-600" />
+            </div>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">No insights yet</h3>
+            <p className="text-sm text-gray-500 mb-4">
+              Start a call to see real-time AI analysis and insights
+            </p>
+            <div className="flex items-center justify-center space-x-2 text-xs text-gray-400">
+              <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
+              <span>AI is ready to analyze</span>
+            </div>
           </div>
         ) : (
-          insights.map(renderInsight)
+          insights.map((insight, index) => (
+            <div key={index} className="animate-slide-up">
+              {renderInsight(insight)}
+            </div>
+          ))
         )}
       </div>
     </div>
